@@ -16,22 +16,26 @@
 #define STARTER_RELAY_PIN 4
 
 /* --- Commands --- */
-const int KILL = 0;
-const int STANDBY = 1;
-const int IGNITION = 2;
-const int RUN = 3;
+char C_KILL = '0';
+char C_STANDBY = '1';
+char C_IGNITION = '2';
+char C_RUN = '3';
 
 /* --- Objects --- */
 DualVNH5019MotorShield MOTORS;
 
 /* --- Constants --- */
-const int BAUD = 115200;
+const int BAUD = 9600;
 
 /* --- Variables --- */
 volatile int STEERING_POSITION = 0;
 volatile int ACTUATOR_POSITION = 0;
 volatile int STEERING_SPEED = 100;
+
+/* --- Character Buffer --- */
 char COMMAND;
+
+/* --- Boolean States --- */
 boolean STOP_RELAY = false;
 boolean STARTER_RELAY = false;
 boolean REGULATOR_RELAY = false;
@@ -43,54 +47,45 @@ void setup() {
 
 /* --- Loop --- */
 void loop() {
-
+  
   // Attempt to get command
-  if (Serial.available()) {
-    char COMMAND = Serial.read();
-    switch (COMMAND) {
-      case STOP:
-        STOP_RELAY = true;
-        STARTER_RELAY = false;
-        REGULATOR_RELAY = false;
-        break;
-      case STANDBY:
-        STOP_RELAY = false;
-        STARTER_RELAY = false;
-        REGULATOR_RELAY = true;
-        break;
-      case IGNITION:
-        STOP_RELAY = false;
-        STARTER_RELAY = true;
-        REGULATOR_RELAY = false;
-        break;
-      case RUN:
-        STOP_RELAY = false;
-        STARTER_RELAY = false;
-        REGULATOR_RELAY = true;
-        break;
-      default:
-        break;
-    }
-  }
+  COMMAND = Serial.read();  
  
-  // Handle Engine 
-  if (STOP_RELAY) {
+  // Base Action on received command 
+  if (char(COMMAND) == char(C_KILL)) {
+    Serial.println("...");
+    delay(500);
     digitalWrite(STOP_RELAY_PIN, LOW);
+    digitalWrite(STARTER_RELAY_PIN, LOW);
+    digitalWrite(REGULATOR_RELAY_PIN, LOW);
   }
-  else {
-    digitalWrite(STOP_RELAY_PIN, HIGH);
+  else if (COMMAND == C_STANDBY) {
+    Serial.println("*click*");
+    delay(500);
+    digitalWrite(STOP_RELAY_PIN, LOW);
+    digitalWrite(STARTER_RELAY_PIN, LOW);
+    digitalWrite(REGULATOR_RELAY_PIN, LOW);
   }
-  if (REGULATOR_RELAY) {
+  else if (COMMAND == C_IGNITION) {
+    Serial.println("HRNGrrgrgrg");
+    delay(500);
+    digitalWrite(STOP_RELAY_PIN, LOW);
+    digitalWrite(STARTER_RELAY_PIN, LOW);
+    digitalWrite(REGULATOR_RELAY_PIN, LOW);
+  }
+  else if (COMMAND == C_RUN) {
+    Serial.println("Vrrrrrrrrroom");
+    delay(500);
+    digitalWrite(STOP_RELAY_PIN, LOW);
+    digitalWrite(STARTER_RELAY_PIN, LOW);
     digitalWrite(REGULATOR_RELAY_PIN, LOW);
   }
   else {
-    digitalWrite(REGULATOR_RELAY_PIN, HIGH);
-  }
-  if (STARTER_RELAY) {
-    digitalWrite(STARTER_RELAY_PIN, LOW);
-  }
-  else {
-    digitalWrite(STARTER_RELAY_PIN, HIGH);
+    // This is what the controller will do if a string 
+    // is not parsed properly or if it is no longer
+    // receiving serial commands.
+    Serial.println("*crickets*");
+    delay(1);
   }
   
   // Handle steering
